@@ -1,4 +1,4 @@
-// gin demo
+// gin demo from b站
 package main
 
 import (
