@@ -2,4 +2,4 @@ module gin_demo
 
 go 1.16
 
-require github.com/gin-gonic/gin v1.7.2
+require github.com/gin-gonic/gin v1.7.4
