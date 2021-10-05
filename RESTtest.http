@@ -1,0 +1,4 @@
+GET http://localhost:8080/recipes/
+Accept: application/json
+
+### 參考 https://www.jetbrains.com/help/go/http-client-in-product-code-editor.html#using-response-handler-scripts
