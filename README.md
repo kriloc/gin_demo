@@ -30,3 +30,7 @@ put http://localhost:8080/recipes/600dcc85a65917cbd1f201b0
 更改其中的 "name":"xxxxxxx"
 ```
 
+出現:
+`missing go.sum entry for module providing package`
+
+使用`go mod tidy`

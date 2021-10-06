@@ -6,6 +6,7 @@ import (
 	handlers "gin_demo/handlers"
 	"gin_demo/models"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -34,7 +35,6 @@ func init(){
 	log.Println("Connected to Rpi4 MongoDB")
 
 	collection := client.Database("demo").Collection("recipes")
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
 
 	// insert json data to mongodb
 	// 有資料就不再輸入了
@@ -49,8 +49,32 @@ func init(){
 	//	log.Fatal(err)
 	//}
 	//log.Println("Inserted recipes:", len(insertManyResult.InsertedIDs))
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "192.168.212.111:6379",
+		Password: "",
+		DB: 0,
+	})
+	status := redisClient.Ping()
+	log.Println(status, "Connected to Rpi4 Redis")
+	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
 }
 
+func main() {
+	router := gin.Default()
+	//r.GET("/hello", func(c *gin.Context) {
+	//	c.String(http.StatusOK, "OK")
+	//})
+	router.POST("/recipes",recipesHandler.NewRecipeHandler)
+	router.GET("/recipes", recipesHandler.ListRecipesHandler)
+	router.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+	router.DELETE("recipes/:id", recipesHandler.DeleteRecipeHandler)
+	//router.GET("/recipes/search", SearchRecipesHandler)
+	router.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
+	//http://localhost:8080/recipes/61543159f84b94bb7be3de8e
+	router.Run()
+
+}
 //func NewRecipeHandler(c *gin.Context){
 //	var recipe Recipe
 //	if err := c.ShouldBindJSON(&recipe); err!=nil{
@@ -109,21 +133,7 @@ func init(){
 //	c.JSON(http.StatusOK, recipe)
 //}
 
-func main() {
-	router := gin.Default()
-	//r.GET("/hello", func(c *gin.Context) {
-	//	c.String(http.StatusOK, "OK")
-	//})
-	router.POST("/recipes",recipesHandler.NewRecipeHandler)
-	router.GET("/recipes", recipesHandler.ListRecipesHandler)
-	router.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
-	router.DELETE("recipes/:id", recipesHandler.DeleteRecipeHandler)
-	//router.GET("/recipes/search", SearchRecipesHandler)
-	router.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
-    //http://localhost:8080/recipes/61543159f84b94bb7be3de8e
-	router.Run()
 
-}
 
 //func DeleteRecipeHandler(c *gin.Context) {
 //	id := c.Param("id")
