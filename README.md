@@ -34,3 +34,7 @@ put http://localhost:8080/recipes/600dcc85a65917cbd1f201b0
 `missing go.sum entry for module providing package`
 
 使用`go mod tidy`
+
+go get go.mongodb.org/mongo-driver/mongo
+go get github.com/go-redis/redis/v8
+go get github.com/dgrijalva/jwt-go
