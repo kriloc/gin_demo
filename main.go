@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	handlers "gin_demo/handlers"
-	"gin_demo/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,11 +14,11 @@ import (
 	//"strings"
 )
 
-var recipes []models.Recipe
 var ctx context.Context
 var err error
 var client *mongo.Client
 var recipesHandler *handlers.RecipesHandler
+var authHandler *handlers.AuthHandler
 
 func init(){
 	//recipes = make([]Recipe, 0)
@@ -58,23 +57,62 @@ func init(){
 	status := redisClient.Ping()
 	log.Println(status, "Connected to Rpi4 Redis")
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
+
+	collectionUsers := client.Database("demo").Collection("users")
+	authHandler = handlers.NewAuthHandler(ctx, collectionUsers)
 }
 
 func main() {
+	//createUsers()
 	router := gin.Default()
 	//r.GET("/hello", func(c *gin.Context) {
 	//	c.String(http.StatusOK, "OK")
 	//})
-	router.POST("/recipes",recipesHandler.NewRecipeHandler)
+	router.POST("/signin",authHandler.SignInHandler)
+	router.POST("/refresh", authHandler.RefreshHandler)
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
-	router.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
-	router.DELETE("recipes/:id", recipesHandler.DeleteRecipeHandler)
-	//router.GET("/recipes/search", SearchRecipesHandler)
-	router.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
-	//http://localhost:8080/recipes/61543159f84b94bb7be3de8e
+	//router.POST("/recipes", recipesHandler.NewRecipeHandler)
+
+	authorized := router.Group("/")
+	authorized.Use(authHandler.AuthMiddleware())
+	{
+		authorized.POST("/recipes", recipesHandler.NewRecipeHandler)
+		authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+		authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+		authorized.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
+	}
+
 	router.Run()
+	//router.GET("/recipes/search", SearchRecipesHandler)
+
+	//http://localhost:8080/recipes/61543159f84b94bb7be3de8e
 
 }
+
+//func createUsers(){
+//	users := map[string]string{
+//		"admin":"fCRmh4Q2J7Rseqkz",
+//		"packt":"RE4zfHB35VPtTkbT",
+//		"mlabouardy": "L3nSFRcZzNQ67bcc",
+//	}
+//	ctx = context.Background()
+//	client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://192.168.212.111:27017/test"))
+//	if err = client.Ping(context.TODO(),readpref.Primary()); err != nil{
+//		log.Fatal(err)
+//	}
+//	collection := client.Database("demo").Collection("users")
+//	h := sha256.New()
+//	for username, password := range users {
+//
+//		collection.InsertOne(ctx, bson.M{
+//
+//			"username": username,
+//
+//			"password": string(h.Sum([]byte(password))),
+//		})
+//	}
+//	log.Println("createed users...")
+//}
 //func NewRecipeHandler(c *gin.Context){
 //	var recipe Recipe
 //	if err := c.ShouldBindJSON(&recipe); err!=nil{

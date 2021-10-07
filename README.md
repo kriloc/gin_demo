@@ -38,3 +38,19 @@ put http://localhost:8080/recipes/600dcc85a65917cbd1f201b0
 go get go.mongodb.org/mongo-driver/mongo
 go get github.com/go-redis/redis/v8
 go get github.com/dgrijalva/jwt-go
+
+## Auth: JWT
+先 POST http://localhost:8080/signin
+其中Body
+```json
+{
+    "username":"admin",
+    "password":"fCRmh4Q2J7Rseqkz"
+}
+```
+會取得一token
+
+新增食譜 POST http://localhost:8080/recipes
+資料如同前面範例，但Headers欄位新增：
+KEY:Authorization  
+VALUE: 剛剛取得的 token
