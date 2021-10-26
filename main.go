@@ -4,12 +4,14 @@ package main
 import (
 	"context"
 	handlers "gin_demo/handlers"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
+	"time"
 	//"net/http"
 	//"strings"
 )
@@ -20,7 +22,7 @@ var client *mongo.Client
 var recipesHandler *handlers.RecipesHandler
 var authHandler *handlers.AuthHandler
 
-func init(){
+func init() {
 	//recipes = make([]Recipe, 0)
 	//file, _ := ioutil.ReadFile("recipes.json")
 	//_ = json.Unmarshal([]byte(file), &recipes)
@@ -28,7 +30,7 @@ func init(){
 	// mongodb init
 	ctx = context.Background()
 	client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://192.168.212.111:27017/test"))
-	if err = client.Ping(context.TODO(),readpref.Primary()); err != nil{
+	if err = client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Connected to Rpi4 MongoDB")
@@ -50,9 +52,9 @@ func init(){
 	//log.Println("Inserted recipes:", len(insertManyResult.InsertedIDs))
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "192.168.212.111:6379",
+		Addr:     "192.168.212.111:6379",
 		Password: "",
-		DB: 0,
+		DB:       0,
 	})
 	status := redisClient.Ping()
 	log.Println(status, "Connected to Rpi4 Redis")
@@ -65,10 +67,17 @@ func init(){
 func main() {
 	//createUsers()
 	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "OPTIONS"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true, MaxAge: 12 * time.Hour,
+	}))
 	//r.GET("/hello", func(c *gin.Context) {
 	//	c.String(http.StatusOK, "OK")
 	//})
-	router.POST("/signin",authHandler.SignInHandler)
+	router.POST("/signin", authHandler.SignInHandler)
 	router.POST("/refresh", authHandler.RefreshHandler)
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
 	//router.POST("/recipes", recipesHandler.NewRecipeHandler)
@@ -170,8 +179,6 @@ func main() {
 //	recipes[index] = recipe
 //	c.JSON(http.StatusOK, recipe)
 //}
-
-
 
 //func DeleteRecipeHandler(c *gin.Context) {
 //	id := c.Param("id")
